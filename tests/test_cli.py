@@ -32,8 +32,10 @@ def test_list_sort_and_status(fixtures, capsys):
 
 def test_list_rereads_sort_by_finish_in_selected_year(fixtures, capsys):
     main(["list", str(fixtures / "storygraph.csv"), "-y", "2025", "--sort", "finished"])
-    titles = [line.split("  ")[1] for line in capsys.readouterr().out.strip().splitlines()]
+    out = capsys.readouterr().out
+    titles = [line.split("  ")[1] for line in out.strip().splitlines()]
     assert titles.index("The Twice-Read Book") == 1  # Feb 2025, not its 2026 re-read
+    assert "2025-02-26  The Twice-Read Book" in out
 
 
 def test_render(fixtures, tmp_path, offline, capsys):

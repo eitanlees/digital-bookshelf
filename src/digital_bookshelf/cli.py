@@ -84,7 +84,8 @@ def cmd_render(args: argparse.Namespace) -> int:
 def cmd_list(args: argparse.Namespace) -> int:
     books = _selected_books(args)
     for book in books:
-        finished = book.last_finished.isoformat() if book.last_finished else "----------"
+        when = _finish_for_sort(book, args.year)
+        finished = when.isoformat() if when != date.max else "----------"
         isbn = book.isbn or "-"
         print(f"{finished}  {book.title}  —  {book.author or '?'}  [isbn {isbn}]  ({book.slug})")
     print(f"\n{len(books)} book(s)", file=sys.stderr)
