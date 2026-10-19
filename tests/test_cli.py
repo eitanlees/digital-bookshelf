@@ -105,6 +105,7 @@ def test_dedupes_across_exports_with_different_subtitles(tmp_path, capsys):
     assert len(capsys.readouterr().out.strip().splitlines()) == 1
 
 
-def test_format_flag_accepts_notion_alias(fixtures, capsys):
-    assert main(["list", str(fixtures / "notion.csv"), "--format", "notion"]) == 0
+def test_format_flag(fixtures, capsys):
     assert main(["list", str(fixtures / "notion.csv"), "--format", "csv"]) == 0
+    with pytest.raises(SystemExit):
+        main(["list", str(fixtures / "notion.csv"), "--format", "notion"])

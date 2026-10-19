@@ -21,7 +21,7 @@ from .covers import (
     short_title,
 )
 from .models import Book, Status
-from .parsers import FORMAT_ALIASES, FORMATS, ExportFormatError, filter_books, load_books
+from .parsers import FORMATS, ExportFormatError, filter_books, load_books
 from .render import FITS, STYLES, RenderOptions, render_bookshelf
 
 SORTS = ("finished", "title", "author", "none")
@@ -223,7 +223,6 @@ def build_parser() -> argparse.ArgumentParser:
     group.add_argument(
         "--format",
         default="auto",
-        type=lambda s: FORMAT_ALIASES.get(s.lower(), s.lower()),
         choices=("auto", *FORMATS),
         help="export format; csv means any other book log (default: detect from the header)",
     )

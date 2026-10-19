@@ -21,8 +21,6 @@ from pathlib import Path
 from .models import Book, Status
 
 FORMATS = ("storygraph", "goodreads", "csv")
-#: Older names still accepted for ``fmt`` ("notion" was the generic format in 0.1.0).
-FORMAT_ALIASES = {"notion": "csv", "generic": "csv"}
 
 Row = dict[str, str]
 
@@ -44,7 +42,6 @@ def load_books(path: str | Path, fmt: str = "auto") -> list[Book]:
     the CSV header.
     """
     headers, rows = _read_csv(Path(path))
-    fmt = FORMAT_ALIASES.get(fmt, fmt)
     if fmt == "auto":
         fmt = detect_format(headers)
     try:

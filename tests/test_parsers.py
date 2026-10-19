@@ -28,11 +28,6 @@ def test_detect_format_from_headers():
         detect_format(["foo", "bar"])
 
 
-def test_notion_is_an_alias_for_csv(fixtures):
-    books = load_books(fixtures / "notion.csv", "notion")
-    assert {b.source for b in books} == {"csv"}
-
-
 def test_explicit_unknown_format(fixtures):
     with pytest.raises(ExportFormatError, match="Unknown format"):
         load_books(fixtures / "notion.csv", "librarything")
