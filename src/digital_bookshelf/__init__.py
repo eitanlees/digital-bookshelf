@@ -1,4 +1,4 @@
-"""Turn a Goodreads, StoryGraph, or Notion reading log into a grid of book covers."""
+"""Turn a StoryGraph, Goodreads, or any CSV reading log into a grid of book covers."""
 
 from importlib.metadata import PackageNotFoundError, version
 

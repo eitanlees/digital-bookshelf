@@ -87,7 +87,7 @@ def test_bad_file(tmp_path, capsys):
     path = tmp_path / "x.csv"
     path.write_text("foo,bar\n1,2\n", encoding="utf-8")
     assert main(["list", str(path)]) == 2
-    assert "Could not recognise" in capsys.readouterr().err
+    assert "Could not find a title column" in capsys.readouterr().err
 
 
 def test_missing_file(tmp_path, capsys):
@@ -103,3 +103,8 @@ def test_dedupes_across_exports_with_different_subtitles(tmp_path, capsys):
     )
     main(["list", str(a), str(b)])
     assert len(capsys.readouterr().out.strip().splitlines()) == 1
+
+
+def test_format_flag_accepts_notion_alias(fixtures, capsys):
+    assert main(["list", str(fixtures / "notion.csv"), "--format", "notion"]) == 0
+    assert main(["list", str(fixtures / "notion.csv"), "--format", "csv"]) == 0

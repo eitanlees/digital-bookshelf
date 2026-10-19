@@ -21,7 +21,7 @@ from .covers import (
     short_title,
 )
 from .models import Book, Status
-from .parsers import FORMATS, ExportFormatError, filter_books, load_books
+from .parsers import FORMAT_ALIASES, FORMATS, ExportFormatError, filter_books, load_books
 from .render import FITS, STYLES, RenderOptions, render_bookshelf
 
 SORTS = ("finished", "title", "author", "none")
@@ -209,7 +209,7 @@ def _find_covers(args: argparse.Namespace, books: list[Book]) -> list[CoverResul
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="bookshelf",
-        description="Turn a Goodreads, StoryGraph, or Notion reading log into a grid of covers.",
+        description="Turn a StoryGraph, Goodreads, or any CSV reading log into a grid of covers.",
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = parser.add_subparsers(dest="command", required=True, metavar="COMMAND")
@@ -223,8 +223,9 @@ def build_parser() -> argparse.ArgumentParser:
     group.add_argument(
         "--format",
         default="auto",
+        type=lambda s: FORMAT_ALIASES.get(s.lower(), s.lower()),
         choices=("auto", *FORMATS),
-        help="export format (default: detect from the CSV header)",
+        help="export format; csv means any other book log (default: detect from the header)",
     )
     group.add_argument(
         "--status",

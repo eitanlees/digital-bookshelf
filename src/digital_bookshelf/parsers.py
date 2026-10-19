@@ -4,9 +4,10 @@ Supported formats:
 
 * **StoryGraph** - "Manage Account → Export StoryGraph Library".
 * **Goodreads** - "My Books → Import and export → Export Library".
-* **Notion** - any Notion database exported as CSV. Notion databases are
-  user-defined, so this reader looks for commonly named columns (``Title`` or
-  ``Name``, ``Author``, ``Status``, ``Finish`` ...) rather than a fixed schema.
+* **Any other CSV** (``"csv"``) - a book log you keep yourself, exported
+  from Notion, Airtable, Google Sheets, Excel, and so on. There is no fixed
+  schema; this reader looks for commonly named columns (``Title``, ``Author``,
+  ``Status``, ``Date Finished`` ...). Only a title column is required.
 """
 
 from __future__ import annotations
@@ -19,7 +20,9 @@ from pathlib import Path
 
 from .models import Book, Status
 
-FORMATS = ("storygraph", "goodreads", "notion")
+FORMATS = ("storygraph", "goodreads", "csv")
+#: Older names still accepted for ``fmt`` ("notion" was the generic format in 0.1.0).
+FORMAT_ALIASES = {"notion": "csv", "generic": "csv"}
 
 Row = dict[str, str]
 
@@ -37,9 +40,11 @@ def load_books(path: str | Path, fmt: str = "auto") -> list[Book]:
     """Read every book from a CSV export.
 
     ``fmt`` is one of ``"auto"``, ``"storygraph"``, ``"goodreads"`` or
-    ``"notion"``. With ``"auto"`` the format is detected from the CSV header.
+    ``"csv"`` (any other book log). With ``"auto"`` the format is detected from
+    the CSV header.
     """
     headers, rows = _read_csv(Path(path))
+    fmt = FORMAT_ALIASES.get(fmt, fmt)
     if fmt == "auto":
         fmt = detect_format(headers)
     try:
@@ -58,11 +63,11 @@ def detect_format(headers: Iterable[str]) -> str:
         return "storygraph"
     if {"book id", "exclusive shelf"} <= keys:
         return "goodreads"
-    if keys & {"title", "name", "book", "book title"}:
-        return "notion"
+    if keys & set(_TITLE_COLUMNS):
+        return "csv"
     raise ExportFormatError(
-        "Could not recognise this CSV. Expected a StoryGraph, Goodreads, or Notion "
-        "export with a 'Title' (or 'Name') column."
+        "Could not find a title column in this CSV. Name it 'Title' (or 'Name' or "
+        "'Book'); 'Author', 'Status', and 'Date Finished' columns are also used if present."
     )
 
 
@@ -121,40 +126,51 @@ def parse_goodreads_row(row: Row) -> Book | None:
     )
 
 
-_NOTION_TITLE = ("title", "name", "book", "book title")
-_NOTION_AUTHOR = ("author", "authors", "author(s)", "writer")
-_NOTION_STATUS = ("status", "read status", "state", "shelf")
-_NOTION_FINISH = (
-    "finish", "finished", "date finished", "finish date", "finished on", "end",
-    "end date", "date read", "completed", "date completed", "read on",
+# Column names recognised in a generic CSV, matched case-insensitively. The first
+# non-empty one wins.
+_TITLE_COLUMNS = ("title", "name", "book", "book title", "book name")
+_AUTHOR_COLUMNS = ("author", "authors", "author(s)", "author name", "writer", "by")
+_STATUS_COLUMNS = ("status", "read status", "reading status", "state", "shelf")
+_FINISH_COLUMNS = (
+    "date finished", "finished", "finish", "finish date", "finished on", "date read",
+    "read date", "read on", "date completed", "completed", "end date", "end", "date",
 )  # fmt: skip
-_NOTION_ISBN = ("isbn", "isbn13", "isbn 13", "isbn-13", "isbn10", "isbn-10")
+_YEAR_COLUMNS = ("year read", "year finished", "read in")
+_ISBN_COLUMNS = ("isbn", "isbn13", "isbn 13", "isbn-13", "isbn10", "isbn 10", "isbn-10")
 
 
-def parse_notion_row(row: Row) -> Book | None:
-    title = _first(row, _NOTION_TITLE)
+def parse_generic_row(row: Row) -> Book | None:
+    """Parse a row from any book log with recognisable column names."""
+    title = _first(row, _TITLE_COLUMNS)
     if not title:
         return None
-    finished = _dates_in(_first(row, _NOTION_FINISH), last_of_each_range=True)
-    status_text = _first(row, _NOTION_STATUS)
-    if status_text:
+    finished = _dates_in(_first(row, _FINISH_COLUMNS), last_of_each_range=True)
+    if not finished and (year := re.fullmatch(r"\d{4}", _first(row, _YEAR_COLUMNS))):
+        # Only the year is known; Jan 1 keeps it in the right year for --year.
+        finished = [date(int(year[0]), 1, 1)]
+
+    if status_text := _first(row, _STATUS_COLUMNS):
         status = _status_from_text(status_text)
-    else:
+    elif any(key in row for key in _STATUS_COLUMNS):
         status = Status.READ if finished else Status.OTHER
+    else:
+        # A plain list with no status column is a list of books read.
+        status = Status.READ
+
     return Book(
         title=title,
-        authors=split_authors(_first(row, _NOTION_AUTHOR)),
-        isbn=clean_isbn(_first(row, _NOTION_ISBN)),
+        authors=split_authors(_first(row, _AUTHOR_COLUMNS)),
+        isbn=clean_isbn(_first(row, _ISBN_COLUMNS)),
         status=status,
         finished=finished,
-        source="notion",
+        source="csv",
     )
 
 
 _PARSERS: dict[str, Callable[[Row], Book | None]] = {
     "storygraph": parse_storygraph_row,
     "goodreads": parse_goodreads_row,
-    "notion": parse_notion_row,
+    "csv": parse_generic_row,
 }
 
 

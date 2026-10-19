@@ -29,7 +29,7 @@ class Book:
     status: Status = Status.READ
     #: Every date the book was finished, oldest first. Re-reads add entries.
     finished: list[date] = field(default_factory=list)
-    #: Which export format the book came from ("notion", "storygraph", ...).
+    #: Which export format the book came from ("storygraph", "goodreads", "csv").
     source: str = ""
 
     @property

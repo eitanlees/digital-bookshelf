@@ -1,14 +1,14 @@
 [project]
 name = "digital-bookshelf"
 version = "0.1.0"
-description = "Turn your Goodreads, StoryGraph, or Notion reading log into a grid of book covers."
+description = "Turn your StoryGraph, Goodreads, or any CSV reading log into a grid of book covers."
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Eitan Lees" }]
 requires-python = ">=3.10"
 dependencies = ["pillow>=10.1"]
-keywords = ["books", "reading", "goodreads", "storygraph", "notion", "book covers"]
+keywords = ["books", "reading", "reading log", "goodreads", "storygraph", "notion", "csv", "book covers"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",

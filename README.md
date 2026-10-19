@@ -3,12 +3,13 @@
 Turn your reading log into a **digital bookshelf**: one image with the cover of
 every book you read, arranged in a neat grid.
 
-It reads exports from **StoryGraph**, **Goodreads**, and **Notion**, finds each
-book's cover online, and lays them out for you. It works even when your list has
-no ISBNs (just titles and authors).
+It works with a **StoryGraph** or **Goodreads** export, or with **any CSV of
+books you keep yourself** (a Notion database, a Google Sheet, an Excel file, …).
+It finds each book's cover online and lays them all out for you. All you need is
+titles and authors; ISBNs help but aren't required.
 
 ```bash
-bookshelf render storygraph-export.csv --year 2025 --title "My {year} in Books" --subtitle "{count} books"
+bookshelf render my-books.csv --year 2025 --title "My {year} in Books" --subtitle "{count} books"
 ```
 
 ## Install
@@ -19,33 +20,64 @@ pipx install digital-bookshelf      # or: uv tool install digital-bookshelf
 
 Requires Python 3.10+. The only dependency is [Pillow](https://python-pillow.org).
 
-## Getting your export
+## Your reading log
 
-| Service    | How to export                                                                                                                                                                                                                    |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| StoryGraph | Click your profile picture → **Manage Account** → **Export StoryGraph Library**. You get a CSV.                                                                                                                               |
-| Goodreads  | **My Books** → **Import and export** (under *Tools*) → **Export Library**.                                                                                                                                                       |
-| Notion     | Open the database → `•••` → **Export** → *Markdown & CSV*. Unzip it and use the `.csv` (use the `_all.csv` one if your view is filtered). The database needs a title column (`Title` or `Name`) and ideally `Author`, `Status`, and a finish-date column. |
+`bookshelf` reads three kinds of CSV files and works out which one you gave it
+from the header row.
 
-The format is detected automatically from the CSV header. To force one, pass
-`--format storygraph|goodreads|notion`.
+### StoryGraph
 
-### Notion columns
+Click your profile picture → **Manage Account** → **Export StoryGraph Library**.
+Use the CSV file as is.
 
-Notion databases are free-form, so `bookshelf` looks for common column names
-(matching is case-insensitive):
+### Goodreads
 
-| Meaning     | Recognised column names                                                         |
-| ----------- | ------------------------------------------------------------------------------- |
-| Title       | `Title`, `Name`, `Book`, `Book Title`                                           |
-| Author      | `Author`, `Authors`, `Author(s)`, `Writer`                                      |
-| Status      | `Status`, `Read Status`, `State`, `Shelf`                                       |
-| Finish date | `Finish`, `Finished`, `Date Finished`, `Finish Date`, `End Date`, `Date Read`, … |
-| ISBN        | `ISBN`, `ISBN13`, `ISBN-13`, `ISBN10` (optional)                                |
+**My Books** → **Import and export** (under *Tools*) → **Export Library**. Use
+the CSV file as is.
 
-Status values like *Read*, *Finished*, *Currently Reading*, *Want to Read*, and
-*Stopped*/*DNF* are understood. Dates such as `December 23, 2025`, `2025/12/23`,
-`2025-12-23`, and date ranges (`May 2, 2025 → May 9, 2025`) all work.
+### Any other CSV
+
+If you track your reading somewhere else, export or save it as a CSV. The only
+column you need is the book's title; everything else is optional but helps:
+
+```csv
+Title,Author,Status,Date Finished
+Dune,Frank Herbert,Read,2025-01-14
+The Remains of the Day,Kazuo Ishiguro,Read,"March 3, 2025"
+Middlemarch,George Eliot,Currently Reading,
+```
+
+Columns are matched by name, ignoring case. The first matching column that has a
+value is used:
+
+| Meaning     | Column names                                                                         |
+| ----------- | ------------------------------------------------------------------------------------ |
+| Title       | `Title`, `Name`, `Book`, `Book Title`, `Book Name` (**required**)                    |
+| Author      | `Author`, `Authors`, `Author(s)`, `Author Name`, `Writer`, `By`                      |
+| Status      | `Status`, `Read Status`, `Reading Status`, `State`, `Shelf`                          |
+| Finish date | `Date Finished`, `Finished`, `Finish`, `Finish Date`, `Date Read`, `Read Date`, `End Date`, `Date`, … |
+| Year read   | `Year Read`, `Year Finished`, `Read In`, used if there is no full date               |
+| ISBN        | `ISBN`, `ISBN13`, `ISBN-13`, `ISBN10`, `ISBN-10`                                      |
+
+- **Status:** values like *Read*, *Finished*, *Currently Reading*, *Want to
+  Read*, *TBR*, and *Stopped*/*DNF* are understood. If there is no status column
+  at all, every row is treated as a book you've read.
+- **Dates:** `2025-12-23`, `2025/12/23`, `12/23/2025`, `December 23, 2025`, and
+  ranges like `May 2, 2025 → May 9, 2025` all work. For a range, the end date
+  counts as when you finished.
+- **Several authors:** separate them with commas.
+
+Other columns (rating, tags, page count, …) are ignored, so you don't need to
+tidy up your spreadsheet first.
+
+**Notion:** open the database → `•••` → **Export** → *Markdown & CSV*. Unzip it
+and use the `.csv` file. Use the `_all.csv` one if your view is filtered.
+
+**Google Sheets / Excel / Numbers / Airtable:** use *Download* or *Export* as
+CSV.
+
+To skip auto-detection, pass `--format storygraph`, `--format goodreads`, or
+`--format csv`.
 
 ## Usage
 

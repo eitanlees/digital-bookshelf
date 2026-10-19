@@ -15,16 +15,22 @@ def by_title(books):
 
 @pytest.mark.parametrize(
     ("name", "expected"),
-    [("storygraph.csv", "storygraph"), ("goodreads.csv", "goodreads"), ("notion.csv", "notion")],
+    [("storygraph.csv", "storygraph"), ("goodreads.csv", "goodreads"), ("notion.csv", "csv")],
 )
 def test_detects_format(fixtures, name, expected):
     assert {b.source for b in load_books(fixtures / name)} == {expected}
 
 
 def test_detect_format_from_headers():
-    assert detect_format(["Name", "Author", "Date Finished"]) == "notion"
-    with pytest.raises(ExportFormatError):
+    assert detect_format(["Name", "Author", "Date Finished"]) == "csv"
+    assert detect_format(["Book"]) == "csv"
+    with pytest.raises(ExportFormatError, match="title column"):
         detect_format(["foo", "bar"])
+
+
+def test_notion_is_an_alias_for_csv(fixtures):
+    books = load_books(fixtures / "notion.csv", "notion")
+    assert {b.source for b in books} == {"csv"}
 
 
 def test_explicit_unknown_format(fixtures):
@@ -81,10 +87,10 @@ def test_goodreads(fixtures):
     assert books["Halfway There"].status is Status.READING
 
 
-# -- Notion --------------------------------------------------------------------
+# -- Generic CSV (Notion, spreadsheets, ...) ------------------------------------
 
 
-def test_notion(fixtures):
+def test_notion_style_export(fixtures):
     books = by_title(load_books(fixtures / "notion.csv"))  # file has a UTF-8 BOM
     assert len(books) == 7
     assert books["The Lighthouse Ledger"].status is Status.READING
@@ -98,20 +104,47 @@ def test_notion(fixtures):
     assert kitchen.isbn is None
 
 
-def test_notion_alternate_columns(tmp_path):
+def write_csv(tmp_path, text):
     path = tmp_path / "books.csv"
-    path.write_text(
+    path.write_text(text, encoding="utf-8")
+    return path
+
+
+def test_csv_alternate_columns(tmp_path):
+    path = write_csv(
+        tmp_path,
         "Name,Authors,Date Finished,ISBN\n"
         'A Book,Some One,"May 2, 2025 → May 9, 2025",978-0-00-000000-2\n'
         "Unread Book,Someone Else,,\n",
-        encoding="utf-8",
     )
     first, second = load_books(path)
     assert first.title == "A Book"
     assert first.finished == [date(2025, 5, 9)]
     assert first.isbn == "9780000000002"
-    assert first.status is Status.READ  # no status column, but finished
-    assert second.status is Status.OTHER
+    assert first.status is Status.READ
+    assert second.status is Status.READ  # no status column: everything was read
+    assert second.finished == []
+
+
+def test_csv_with_only_titles_and_authors(tmp_path):
+    path = write_csv(tmp_path, "Book,Author\nDune,Frank Herbert\nEmma,Jane Austen\n")
+    books = filter_books(load_books(path))  # default filter keeps "read" books
+    assert [b.title for b in books] == ["Dune", "Emma"]
+
+
+def test_csv_empty_status_cell(tmp_path):
+    path = write_csv(
+        tmp_path,
+        "Title,Status,Date Read\nFinished,,2025-03-01\nUnknown,,\nQueued,TBR,\n",
+    )
+    statuses = {b.title: b.status for b in load_books(path)}
+    assert statuses == {"Finished": Status.READ, "Unknown": Status.OTHER, "Queued": Status.TO_READ}
+
+
+def test_csv_year_only_column(tmp_path):
+    path = write_csv(tmp_path, "Title,Author,Year Read\nDune,Frank Herbert,2024\n")
+    [book] = load_books(path)
+    assert book.finished_in(2024)
 
 
 # -- filtering -----------------------------------------------------------------
@@ -130,7 +163,7 @@ def test_filter_by_year_and_status(fixtures):
     assert [b.title for b in filter_books(books, statuses=[Status.DNF])] == ["A Book I Gave Up On"]
 
 
-def test_notion_year_filter_counts_by_finish_date(fixtures):
+def test_csv_year_filter_counts_by_finish_date(fixtures):
     books = load_books(fixtures / "notion.csv")
     assert {b.title for b in filter_books(books, year=2025)} == {
         "Small Gods of the Kitchen",
