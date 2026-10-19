@@ -34,7 +34,7 @@ def test_explicit_unknown_format(fixtures):
 
 def test_empty_file(tmp_path):
     path = tmp_path / "empty.csv"
-    path.write_text("")
+    path.write_text("", encoding="utf-8")
     with pytest.raises(ExportFormatError, match="empty"):
         load_books(path)
 
@@ -103,7 +103,8 @@ def test_notion_alternate_columns(tmp_path):
     path.write_text(
         "Name,Authors,Date Finished,ISBN\n"
         'A Book,Some One,"May 2, 2025 → May 9, 2025",978-0-00-000000-2\n'
-        "Unread Book,Someone Else,,\n"
+        "Unread Book,Someone Else,,\n",
+        encoding="utf-8",
     )
     first, second = load_books(path)
     assert first.title == "A Book"

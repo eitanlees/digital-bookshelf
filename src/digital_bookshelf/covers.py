@@ -439,7 +439,7 @@ class CoverFinder:
 
     def _load_index(self) -> dict[str, dict]:
         try:
-            return json.loads(self._index_path.read_text())
+            return json.loads(self._index_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             return {}
 
@@ -447,7 +447,7 @@ class CoverFinder:
         """Write the lookup index to disk (``find_all`` does this for you)."""
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         tmp = self._index_path.with_suffix(".tmp")
-        tmp.write_text(json.dumps(self._index, indent=2, sort_keys=True))
+        tmp.write_text(json.dumps(self._index, indent=2, sort_keys=True), encoding="utf-8")
         tmp.replace(self._index_path)
 
 

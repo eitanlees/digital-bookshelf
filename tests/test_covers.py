@@ -132,7 +132,7 @@ def test_finder_downloads_and_caches(web, tmp_path):
     assert result.path.exists() and result.path.suffix == ".jpg"
     assert web.requests == [isbn_url]  # ISBN hit: no searches needed
 
-    index = json.loads((tmp_path / "index.json").read_text())
+    index = json.loads((tmp_path / "index.json").read_text(encoding="utf-8"))
     assert next(iter(index.values()))["url"] == isbn_url
 
     # A second finder reads from the cache without touching the network.
@@ -184,7 +184,7 @@ def test_finder_does_not_cache_errors(web, tmp_path):
     result = finder.find_all([WAGER])[0]
     assert result.path is None
     assert "503" in result.error
-    assert json.loads((tmp_path / "index.json").read_text()) == {}
+    assert json.loads((tmp_path / "index.json").read_text(encoding="utf-8")) == {}
 
 
 def test_overrides_win(web, tmp_path):

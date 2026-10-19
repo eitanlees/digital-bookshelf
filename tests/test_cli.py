@@ -83,7 +83,7 @@ def test_covers_command(fixtures, tmp_path, monkeypatch, capsys):
 
 def test_bad_file(tmp_path, capsys):
     path = tmp_path / "x.csv"
-    path.write_text("foo,bar\n1,2\n")
+    path.write_text("foo,bar\n1,2\n", encoding="utf-8")
     assert main(["list", str(path)]) == 2
     assert "Could not recognise" in capsys.readouterr().err
 
@@ -94,8 +94,10 @@ def test_missing_file(tmp_path, capsys):
 
 def test_dedupes_across_exports_with_different_subtitles(tmp_path, capsys):
     a = tmp_path / "a.csv"
-    a.write_text("Title,Author,Status\nConscious,Annaka Harris,Read\n")
+    a.write_text("Title,Author,Status\nConscious,Annaka Harris,Read\n", encoding="utf-8")
     b = tmp_path / "b.csv"
-    b.write_text("Name,Author,Status\nConscious: A Brief Guide,Annaka  Harris,Read\n")
+    b.write_text(
+        "Name,Author,Status\nConscious: A Brief Guide,Annaka  Harris,Read\n", encoding="utf-8"
+    )
     main(["list", str(a), str(b)])
     assert len(capsys.readouterr().out.strip().splitlines()) == 1
