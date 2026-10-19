@@ -1,0 +1,52 @@
+[project]
+name = "digital-bookshelf"
+version = "0.1.0"
+description = "Turn your Goodreads, StoryGraph, or Notion reading log into a grid of book covers."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Eitan Lees" }]
+requires-python = ">=3.10"
+dependencies = ["pillow>=10.1"]
+keywords = ["books", "reading", "goodreads", "storygraph", "notion", "book covers"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Multimedia :: Graphics",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://github.com/eitanlees/digital-bookshelf"
+Issues = "https://github.com/eitanlees/digital-bookshelf/issues"
+
+[project.scripts]
+bookshelf = "digital_bookshelf.cli:main"
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "tests", "README.md", "LICENSE"]

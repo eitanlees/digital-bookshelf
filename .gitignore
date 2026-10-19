@@ -1,0 +1,24 @@
+# Personal reading-log exports and generated bookshelves live in the repo
+# root while working locally. Never commit them.
+/*.csv
+/*.png
+/*.jpg
+/*.jpeg
+/*.webp
+/exports/
+/covers/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+build/
+dist/
+
+# Tooling
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.DS_Store
