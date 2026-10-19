@@ -1,6 +1,6 @@
 [project]
 name = "digital-bookshelf"
-version = "0.1.0"
+version = "0.1.1"
 description = "Turn your StoryGraph, Goodreads, or any CSV reading log into a grid of book covers."
 readme = "README.md"
 license = "MIT"
